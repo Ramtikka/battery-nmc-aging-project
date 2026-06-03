@@ -32,126 +32,135 @@ The raw dataset is not included in this repository because of file size. The pro
 ```text
 battery-nmc-aging-project/
 │
-│
 ├── screenshots/
-│   ├── example_file.png
-│   ├── importance_frature_eis.png
-│   ├── Screenshot 2026-06-03 183703.png
-│   ├── Screenshot 2026-06-03 184035.png
-│   ├── Screenshot 2026-06-03 192132.png
+│   ├── examlp_file.png
+│   ├── iportance_frature_eis.png
 │   ├── stage1.png
 │   ├── stage2_after_enrichment.png
 │   ├── stage3_after_eis.png
 │   └── stage4_eis_pls.png
+│
+└── README.md
+```
 
-Methodology
-1. Data Loading And Initial Exploration
+## Methodology
+
+### 1. Data Loading and Initial Exploration
+
 The first step was to inspect the downloaded result-data package and understand the available files. The data was organized into EOCV, EIS, and PLS result folders.
 
+The data was loaded into pandas DataFrames and checked for usable identifiers such as `cell_id` and `sd_block_id`.
 
+Example of a result-data file used in the project:
 
-The data was loaded into pandas DataFrames and checked for usable identifiers such as cell_id and sd_block_id.
+![Example result-data file](screenshots/examlp_file.png)
 
-2. EOCV Feature Engineering
+### 2. EOCV Feature Engineering
+
 The first model used EOCV-based features to predict battery SoH. These features captured degradation behavior from capacity, aging step, temperature, SoC window, and related summary statistics.
 
-Initial data loading and feature checks:
+Initial data loading, feature checks, and preparation:
 
+![Stage 1 - EOCV feature engineering](screenshots/stage1.png)
 
+### 3. Baseline SoH Model
 
-Additional feature preparation:
-
-
-
-3. Baseline SoH Model
 The first working SoH regression model was trained using EOCV-based features.
 
-Result:
+| Model Stage | MAE | RMSE |
+| --- | --- | --- |
+| First EOCV baseline | ~0.44 | ~0.61 |
 
-Model Stage	MAE	RMSE
-First EOCV baseline	~0.44	~0.61
 This gave the first proper benchmark for SoH prediction on unseen cells.
 
+### 4. Enriched EOCV Model
 
-
-4. Enriched EOCV Model
 The EOCV-only model was then improved by adding richer degradation features such as charge/energy throughput, temperature-related values, and additional aging descriptors.
 
-Result:
+| Model Stage | MAE | RMSE |
+| --- | --- | --- |
+| Enriched EOCV-only model | ~0.42 | ~0.55 |
 
-Model Stage	MAE	RMSE
-Enriched EOCV-only model	~0.42	~0.55
 This showed that better battery-specific feature engineering improved prediction accuracy.
 
+![Stage 2 - after enrichment](screenshots/stage2_after_enrichment.png)
 
+### 5. Adding EIS Features
 
-5. Adding EIS Features
 The next step was to add EIS impedance-based features. These included cell-level impedance signatures such as impedance-based SoH indicators, reference impedance values, and mean impedance magnitude.
 
 Feature importance from EIS-enhanced modelling:
 
+![EIS feature importance](screenshots/iportance_frature_eis.png)
 
+| Model Stage | MAE | RMSE |
+| --- | --- | --- |
+| EOCV + EIS model | 0.2814 | 0.3984 |
 
-Result:
-
-Model Stage	MAE	RMSE
-EOCV + EIS model	0.2814	0.3984
 Adding EIS features significantly improved SoH prediction, reducing RMSE from about 0.55 to about 0.40.
 
+![Stage 3 - after EIS](screenshots/stage3_after_eis.png)
 
+### 6. Adding PLS / Pulse-Test Features
 
-6. Adding PLS / Pulse-Test Features
 The final model added PLS and pulse-test resistance features. These features captured additional degradation signals that were not fully represented by EOCV or EIS alone.
 
-Result:
+| Model Stage | MAE | RMSE |
+| --- | --- | --- |
+| EOCV + EIS + PLS model | 0.2584 | 0.3674 |
 
-Model Stage	MAE	RMSE
-EOCV + EIS + PLS model	0.2584	0.3674
 This was the best-performing instantaneous SoH model.
 
+![Stage 4 - EIS + PLS](screenshots/stage4_eis_pls.png)
 
+## Final Model Comparison
 
-Final Model Comparison
-Model Stage	MAE	RMSE	Observation
-First EOCV baseline	~0.44	~0.61	First working SoH model
-Enriched EOCV-only model	~0.42	~0.55	Improved with better feature engineering
-EOCV + EIS model	0.2814	0.3984	Major improvement from impedance features
-EOCV + EIS + PLS model	0.2584	0.3674	Best final model
+| Model Stage | MAE | RMSE | Observation |
+| --- | --- | --- | --- |
+| First EOCV baseline | ~0.44 | ~0.61 | First working SoH model |
+| Enriched EOCV-only model | ~0.42 | ~0.55 | Improved with better feature engineering |
+| EOCV + EIS model | 0.2814 | 0.3984 | Major improvement from impedance features |
+| EOCV + EIS + PLS model | 0.2584 | 0.3674 | Best final model |
+
 The final model reduced RMSE from approximately 0.55 to 0.37 SoH percentage points on unseen cells.
 
-Early-Life Prediction Experiment
+## Early-Life Prediction Experiment
+
 In addition to instantaneous SoH prediction, an early-life prediction experiment was performed using only the first 10-30% of each cell's life to predict final SoH.
 
-Early-Life Fraction	MAE	RMSE
-First 10% of life	5.942	8.028
-First 20% of life	6.762	8.693
-First 30% of life	6.783	8.469
+| Early-Life Fraction | MAE | RMSE |
+| --- | --- | --- |
+| First 10% of life | 5.942 | 8.028 |
+| First 20% of life | 6.762 | 8.693 |
+| First 30% of life | 6.783 | 8.469 |
+
 These results show that long-horizon final-SoH prediction is much harder than instantaneous SoH estimation.
 
+## Key Results
 
+- Built a complete battery SoH prediction pipeline using EOCV, EIS, and PLS result data.
+- Improved SoH prediction RMSE from approximately 0.55 to 0.37.
+- Achieved final model performance of MAE 0.2584 and RMSE 0.3674.
+- Demonstrated that EIS impedance features provide strong predictive value for battery health estimation.
+- Added PLS / pulse-test features for further improvement.
+- Ran early-life prognostics experiments to evaluate long-horizon battery health prediction.
 
-Key Results
-Built a complete battery SoH prediction pipeline using EOCV, EIS, and PLS result data.
-Improved SoH prediction RMSE from approximately 0.55 to 0.37.
-Achieved final model performance of:
-MAE: 0.2584
-RMSE: 0.3674
-Demonstrated that EIS impedance features provide strong predictive value for battery health estimation.
-Added PLS / pulse-test features for further improvement.
-Ran early-life prognostics experiments to evaluate long-horizon battery health prediction.
-Tools And Libraries
-Python
-pandas
-NumPy
-scikit-learn
-XGBoost
-matplotlib
-Jupyter Notebook
-Challenges And Fixes
+## Tools and Libraries
+
+- Python
+- pandas
+- NumPy
+- scikit-learn
+- XGBoost
+- matplotlib
+- Jupyter Notebook
+
+## Challenges and Fixes
+
 During the project, several practical issues were identified and corrected:
 
-Fixed incorrect directory paths while locating result and log data.
-Identified that the available .tar file contained result data rather than raw 2-second log data.
-Avoided duplicated rows while merging EIS features by checking cell_id and sd_block_id.
-Fixed RMSE calculation issues caused by changes in the scikit-learn API.
-Focused the project scope on result-data modelling instead of very large raw time-series logs.
+- Fixed incorrect directory paths while locating result and log data.
+- Identified that the available `.tar` file contained result data rather than raw 2-second log data.
+- Avoided duplicated rows while merging EIS features by checking `cell_id` and `sd_block_id`.
+- Fixed RMSE calculation issues caused by changes in the scikit-learn API.
+- Focused the project scope on result-data modelling instead of very large raw time-series logs.
